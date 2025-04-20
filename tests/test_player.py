@@ -79,6 +79,70 @@ class TestPlayer:
         assert player.y == game.height - player.height
         assert player.rect.y == player.y
     
+    def test_player_movement_left(self, mock_pygame_key_module):
+        """Test that player moves left when left arrow is pressed"""
+        game = MockGame()
+        player = Player(50, 300, game)
+        
+        # Mock left arrow key press
+        mock_pygame_key_module.keys_pressed = {pygame.K_LEFT: True}
+        
+        # Call update to process the key press
+        player.update()
+        
+        # Player should move left by speed amount
+        assert player.x == 50 - player.speed
+        assert player.rect.x == player.x
+    
+    def test_player_movement_right(self, mock_pygame_key_module):
+        """Test that player moves right when right arrow is pressed"""
+        game = MockGame()
+        player = Player(50, 300, game)
+        
+        # Mock right arrow key press
+        mock_pygame_key_module.keys_pressed = {pygame.K_RIGHT: True}
+        
+        # Call update to process the key press
+        player.update()
+        
+        # Player should move right by speed amount
+        assert player.x == 50 + player.speed
+        assert player.rect.x == player.x
+    
+    def test_player_movement_boundary_left(self, mock_pygame_key_module):
+        """Test that player cannot move beyond left edge of the screen"""
+        game = MockGame()
+        player = Player(0, 300, game)  # Start at left edge
+        
+        # Mock left arrow key press
+        mock_pygame_key_module.keys_pressed = {pygame.K_LEFT: True}
+        
+        # Call update to process the key press
+        player.update()
+        
+        # Player should not move beyond left boundary
+        assert player.x == 0
+        assert player.rect.x == player.x
+    
+    def test_player_movement_boundary_right(self, mock_pygame_key_module):
+        """Test that player cannot move beyond right edge of the screen"""
+        game = MockGame()
+        player = Player(300, 300, game)  # Not at right edge yet
+        
+        # Set player at right edge
+        player.x = game.width - player.width
+        player.rect.x = player.x
+        
+        # Mock right arrow key press
+        mock_pygame_key_module.keys_pressed = {pygame.K_RIGHT: True}
+        
+        # Call update to process the key press
+        player.update()
+        
+        # Player should not move beyond right boundary
+        assert player.x == game.width - player.width
+        assert player.rect.x == player.x
+    
     def test_player_shoot(self):
         """Test that player can shoot projectiles"""
         game = MockGame()

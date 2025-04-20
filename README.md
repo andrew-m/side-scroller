@@ -35,6 +35,8 @@ python main.py
 
 - **Arrow Up**: Move spaceship up
 - **Arrow Down**: Move spaceship down
+- **Arrow Left**: Move spaceship left
+- **Arrow Right**: Move spaceship right
 - **Spacebar**: Shoot projectiles
 - **R**: Restart game (after game over)
 - **Q**: Quit game (after game over)

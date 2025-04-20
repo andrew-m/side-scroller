@@ -21,6 +21,12 @@ class Player:
             self.y -= self.speed
         if keys[pygame.K_DOWN] and self.y < self.game.height - self.height:
             self.y += self.speed
+            
+        # Horizontal movement (new)
+        if keys[pygame.K_LEFT] and self.x > 0:
+            self.x -= self.speed
+        if keys[pygame.K_RIGHT] and self.x < self.game.width - self.width:
+            self.x += self.speed
         
         # Update rectangle position
         self.rect.x = self.x
