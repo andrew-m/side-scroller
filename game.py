@@ -89,10 +89,14 @@ class Game:
             
             # Check for collisions with player
             if self.check_collision(enemy.rect, self.player.rect):
-                self.enemies.remove(enemy)
-                self.lives -= 1
-                if self.lives <= 0:
-                    self.game_over = True
+                # Only destroy the enemy and affect player if not in ghost state
+                if not self.player.is_ghost:
+                    self.enemies.remove(enemy)
+                    self.lives -= 1
+                    # Enter ghost state when hit
+                    self.player.enter_ghost_state()
+                    if self.lives <= 0:
+                        self.game_over = True
         
         # Update projectiles
         for projectile in self.projectiles[:]:
@@ -159,3 +163,6 @@ class Game:
         self.lives = 3
         self.game_over = False
         self.spawn_counter = 0
+        # Ensure player is not in ghost state after reset
+        self.player.is_ghost = False
+        self.player.visible = True

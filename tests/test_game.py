@@ -121,6 +121,9 @@ class TestGame:
         # Mock random function for consistent testing
         monkeypatch.setattr('random.uniform', lambda min_val, max_val: 2.0)  # Fixed enemy speed
         
+        # Mock pygame.time.get_ticks to return a fixed value for ghost state timing
+        monkeypatch.setattr(pygame.time, 'get_ticks', lambda: 1000)
+        
         # Mock pygame.key.get_pressed to return an empty dict
         mock_pygame.setattr(pygame.key, 'get_pressed', lambda: {})
         
@@ -137,20 +140,67 @@ class TestGame:
         # Before collision check
         assert len(game.enemies) == 1
         initial_lives = game.lives
+        assert game.player.is_ghost == False
         
         # Test the collision directly
         if game.check_collision(enemy.rect, game.player.rect):
-            game.enemies.remove(enemy)
-            game.lives -= 1
+            if not game.player.is_ghost:
+                game.enemies.remove(enemy)
+                game.lives -= 1
+                game.player.enter_ghost_state()
         
-        # Enemy should be removed, lives decreased
+        # Enemy should be removed, lives decreased, player in ghost state
         assert len(game.enemies) == 0
         assert game.lives == initial_lives - 1
+        assert game.player.is_ghost == True
     
+    def test_player_enemy_collision_in_ghost_state(self, mock_pygame, monkeypatch):
+        """Test that enemies are not destroyed when colliding with player in ghost state"""
+        # Mock random function for consistent testing
+        monkeypatch.setattr('random.uniform', lambda min_val, max_val: 2.0)  # Fixed enemy speed
+        
+        # Mock pygame.time.get_ticks to return a fixed value for ghost state timing
+        monkeypatch.setattr(pygame.time, 'get_ticks', lambda: 1000)
+        
+        # Mock pygame.key.get_pressed to return an empty dict
+        mock_pygame.setattr(pygame.key, 'get_pressed', lambda: {})
+        
+        game = Game()
+        
+        # Put player in ghost state
+        game.player.enter_ghost_state()
+        
+        # Create enemy at a position that overlaps with the player
+        player_x = game.player.x
+        player_y = game.player.y
+        enemy = Enemy(player_x + 10, player_y, game)  # Positioned to overlap with player
+        
+        game.enemies.append(enemy)
+        
+        # Before collision check
+        assert len(game.enemies) == 1
+        initial_lives = game.lives
+        assert game.player.is_ghost == True
+        
+        # Test the collision directly
+        if game.check_collision(enemy.rect, game.player.rect):
+            if not game.player.is_ghost:
+                game.enemies.remove(enemy)
+                game.lives -= 1
+                game.player.enter_ghost_state()
+        
+        # Enemy should NOT be removed, lives should remain the same
+        assert len(game.enemies) == 1
+        assert game.lives == initial_lives
+        assert game.player.is_ghost == True
+        
     def test_game_over_condition(self, mock_pygame, monkeypatch):
         """Test that game over is triggered when lives reach zero"""
         # Mock random function for consistent testing
         monkeypatch.setattr('random.uniform', lambda min_val, max_val: 2.0)  # Fixed enemy speed
+        
+        # Mock pygame.time.get_ticks to return a fixed value for ghost state timing
+        monkeypatch.setattr(pygame.time, 'get_ticks', lambda: 1000)
         
         # Mock pygame.key.get_pressed to return an empty dict
         mock_pygame.setattr(pygame.key, 'get_pressed', lambda: {})
@@ -174,10 +224,12 @@ class TestGame:
         
         # Test the collision directly
         if game.check_collision(enemy.rect, game.player.rect):
-            game.enemies.remove(enemy)
-            game.lives -= 1
-            if game.lives <= 0:
-                game.game_over = True
+            if not game.player.is_ghost:
+                game.enemies.remove(enemy)
+                game.lives -= 1
+                game.player.enter_ghost_state()
+                if game.lives <= 0:
+                    game.game_over = True
         
         # Lives should be zero and game over should be triggered
         assert game.lives == 0
@@ -199,7 +251,8 @@ class TestGame:
         game.game_over = True
         game.spawn_counter = 30
         game.enemies.append(Enemy(400, 300, game))
-        game.projectiles.append(Projectile(200, 200, game))
+        game.player.enter_ghost_state()
+        game.projectiles.append(Projectile(400, 300, game))
         
         # Reset game
         game.reset_game()

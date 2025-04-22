@@ -161,3 +161,65 @@ class TestPlayer:
         projectile = game.projectiles[0]
         assert projectile.x == player.x + player.width
         assert projectile.y == player.y + player.height // 2
+    
+    def test_player_enter_ghost_state(self):
+        """Test that player can enter ghost state"""
+        game = MockGame()
+        player = Player(50, 300, game)
+        
+        # Player should not be in ghost state initially
+        assert player.is_ghost == False
+        
+        # Enter ghost state
+        player.enter_ghost_state()
+        
+        # Player should now be in ghost state
+        assert player.is_ghost == True
+        assert player.ghost_timer > 0
+        assert player.visible == True
+    
+    def test_player_exit_ghost_state(self):
+        """Test that player can exit ghost state"""
+        game = MockGame()
+        player = Player(50, 300, game)
+        
+        # Enter ghost state
+        player.enter_ghost_state()
+        assert player.is_ghost == True
+        
+        # Exit ghost state
+        player.exit_ghost_state()
+        
+        # Player should not be in ghost state anymore
+        assert player.is_ghost == False
+        assert player.visible == True
+    
+    def test_player_ghost_state_visibility(self, monkeypatch):
+        """Test that player flashes when in ghost state"""
+        # Mock pygame.time.get_ticks to simulate time passing
+        mock_time = 0
+        def mock_get_ticks():
+            nonlocal mock_time
+            return mock_time
+        
+        monkeypatch.setattr(pygame.time, 'get_ticks', mock_get_ticks)
+        
+        game = MockGame()
+        player = Player(50, 300, game)
+        player.flash_interval = 100  # 100ms flash interval
+        
+        # Enter ghost state
+        player.enter_ghost_state()
+        
+        # Player should be visible initially
+        assert player.visible == True
+        
+        # Move time to middle of flash interval - should be invisible
+        mock_time = 150  # 150ms
+        player.update()
+        assert player.visible == False
+        
+        # Move time to next flash cycle - should be visible again
+        mock_time = 250  # 250ms
+        player.update()
+        assert player.visible == True

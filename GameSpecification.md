@@ -18,7 +18,7 @@ The game is a simple 2D side-scrolling shoot-em-up where the player controls a s
 
 2.4 Collision Detection
 
-    Player-Blob Collision: If the player's spaceship collides with a blob, the player loses a life.
+    Player-Blob Collision: If the player's spaceship collides with a blob, the blob is destroyed and the player loses a life. After collision, the player enters a 'ghost state' for 2 seconds, during which they flash (appearing and disappearing rapidly) and are immune to collisions with other blobs. While in ghost state, blobs that collide with the player pass through harmlessly and are not destroyed.
     Projectile-Blob Collision: If a projectile collides with a blob, the blob is destroyed, and the player earns points.
 
 3. Game Elements
