@@ -253,6 +253,9 @@ class TestGame:
         game.enemies.append(Enemy(400, 300, game))
         game.player.enter_ghost_state()
         game.projectiles.append(Projectile(400, 300, game))
+        game.current_wave = 3
+        game.wave_enemies_spawned = 20
+        game.wave_transition = True
         
         # Reset game
         game.reset_game()
@@ -264,3 +267,62 @@ class TestGame:
         assert game.spawn_counter == 0
         assert len(game.enemies) == 0
         assert len(game.projectiles) == 0
+        
+        # Wave variables should be reset
+        assert game.current_wave == 1
+        assert game.wave_enemies_spawned == 0
+        assert game.wave_enemies_required == game.calculate_wave_enemies(1)
+        assert game.wave_transition == False
+    
+    def test_calculate_wave_enemies(self, mock_pygame):
+        """Test that wave enemies are calculated correctly"""
+        # Mock pygame.key.get_pressed to return an empty dict
+        mock_pygame.setattr(pygame.key, 'get_pressed', lambda: {})
+        
+        game = Game()
+        
+        # Test wave enemy calculations
+        assert game.calculate_wave_enemies(1) == 30  # 30 enemies for wave 1
+        assert game.calculate_wave_enemies(2) == 40  # 40 enemies for wave 2
+        assert game.calculate_wave_enemies(3) == 50  # 50 enemies for wave 3
+        assert game.calculate_wave_enemies(4) == 60  # 60 enemies for wave 4
+    
+    def test_wave_completion(self, mock_pygame, monkeypatch):
+        """Test wave completion mechanics"""
+        # Mock time for consistent testing
+        mock_time = 0
+        def mock_get_ticks():
+            nonlocal mock_time
+            return mock_time
+            
+        monkeypatch.setattr(pygame.time, 'get_ticks', mock_get_ticks)
+        
+        # Mock pygame.key.get_pressed to return an empty dict
+        mock_pygame.setattr(pygame.key, 'get_pressed', lambda: {})
+        
+        game = Game()
+        
+        # Set up wave completion condition
+        game.wave_enemies_spawned = game.wave_enemies_required
+        assert len(game.enemies) == 0  # No enemies left
+        
+        # Update should trigger wave completion
+        game.update()
+        
+        # Should now be in wave transition
+        assert game.wave_transition == True
+        assert game.wave_completed == True
+        assert game.wave_message_timer == 0  # Our mocked time value
+        
+        # Advance time beyond the message duration
+        mock_time = game.wave_message_duration + 100
+        
+        # Update should start the next wave
+        game.update()
+        
+        # Should now be in wave 2
+        assert game.current_wave == 2
+        assert game.wave_enemies_spawned == 0
+        assert game.wave_enemies_required == 40  # Wave 2 has 40 enemies
+        assert game.wave_transition == False
+        assert game.wave_completed == False

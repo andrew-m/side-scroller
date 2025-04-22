@@ -12,11 +12,17 @@ The game is a simple 2D side-scrolling shoot-em-up where the player controls a s
 
     Blobs: Blobs will spawn from the right side of the screen and move towards the left. They will have simple linear movement.
 
-2.3 Projectiles
+2.3 Wave System
+
+    Waves: The game is organized into waves of enemies. Each wave has a specific number of enemies.
+    Wave Progression: Wave 1 starts with 30 blobs, Wave 2 has 40 blobs, Wave 3 has 50 blobs, and so on.
+    Wave Transition: When all enemies from a wave are either destroyed or have left the screen, the game pauses briefly to display a message about the wave completion and the start of the next wave.
+
+2.4 Projectiles
 
     Player Projectiles: The spaceship can shoot projectiles that move horizontally from left to right. These projectiles will destroy blobs upon collision.
 
-2.4 Collision Detection
+2.5 Collision Detection
 
     Player-Blob Collision: If the player's spaceship collides with a blob, the blob is destroyed and the player loses a life. After collision, the player enters a 'ghost state' for 2 seconds, during which they flash (appearing and disappearing rapidly) and are immune to collisions with other blobs. While in ghost state, blobs that collide with the player pass through harmlessly and are not destroyed.
     Projectile-Blob Collision: If a projectile collides with a blob, the blob is destroyed, and the player earns points.

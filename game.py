@@ -31,6 +31,15 @@ class Game:
         self.enemy_spawn_rate = 60  # frames between enemy spawns
         self.spawn_counter = 0
         
+        # Wave variables
+        self.current_wave = 1
+        self.wave_enemies_spawned = 0
+        self.wave_enemies_required = self.calculate_wave_enemies(self.current_wave)
+        self.wave_completed = False
+        self.wave_transition = False
+        self.wave_message_timer = 0
+        self.wave_message_duration = 1000  # 1 second in milliseconds
+        
         # Font for text display
         self.font = pygame.font.SysFont(None, 36)
         
@@ -73,15 +82,29 @@ class Game:
         
     def update(self):
         """Update game state"""
+        # Check for wave transition
+        if self.wave_transition:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.wave_message_timer >= self.wave_message_duration:
+                self.start_next_wave()
+            return
+        
+        # Check if wave is completed
+        if self.wave_enemies_spawned >= self.wave_enemies_required and len(self.enemies) == 0:
+            self.complete_wave()
+            return
+        
         # Update player
         self.player.update()
         
-        # Spawn enemies
-        self.spawn_counter += 1
-        if self.spawn_counter >= self.enemy_spawn_rate:
-            y_pos = random.randint(50, self.height - 50)
-            self.enemies.append(Enemy(self.width, y_pos, self))
-            self.spawn_counter = 0
+        # Spawn enemies - only if we haven't reached the wave limit
+        if self.wave_enemies_spawned < self.wave_enemies_required:
+            self.spawn_counter += 1
+            if self.spawn_counter >= self.enemy_spawn_rate:
+                y_pos = random.randint(50, self.height - 50)
+                self.enemies.append(Enemy(self.width, y_pos, self))
+                self.wave_enemies_spawned += 1
+                self.spawn_counter = 0
         
         # Update enemies
         for enemy in self.enemies[:]: 
@@ -130,15 +153,21 @@ class Game:
         if self.game_over:
             self.draw_game_over()
         
+        # Draw wave transition message
+        if self.wave_transition:
+            self.draw_wave_message()
+        
         pygame.display.flip()
     
     def draw_hud(self):
-        """Draw score and lives"""
+        """Draw score, lives, and wave info"""
         score_text = self.font.render(f"Score: {self.score}", True, self.WHITE)
         lives_text = self.font.render(f"Lives: {self.lives}", True, self.WHITE)
+        wave_text = self.font.render(f"Wave: {self.current_wave}", True, self.WHITE)
         
         self.screen.blit(score_text, (10, 10))
         self.screen.blit(lives_text, (10, 50))
+        self.screen.blit(wave_text, (10, 90))
     
     def draw_game_over(self):
         """Draw game over screen"""
@@ -154,6 +183,39 @@ class Game:
         """Check if two rectangles collide"""
         return rect1.colliderect(rect2)
     
+    def calculate_wave_enemies(self, wave_number):
+        """Calculate number of enemies for a given wave"""
+        return 30 + (wave_number - 1) * 10
+    
+    def complete_wave(self):
+        """Handle wave completion"""
+        self.wave_completed = True
+        self.wave_transition = True
+        self.wave_message_timer = pygame.time.get_ticks()
+    
+    def start_next_wave(self):
+        """Start the next wave"""
+        self.current_wave += 1
+        self.wave_enemies_spawned = 0
+        self.wave_enemies_required = self.calculate_wave_enemies(self.current_wave)
+        self.wave_completed = False
+        self.wave_transition = False
+    
+    def draw_wave_message(self):
+        """Draw wave transition message"""
+        message = f"Wave {self.current_wave} Cleared!"
+        next_wave_message = f"Get Ready, Wave {self.current_wave + 1}!"
+        
+        wave_text = self.font.render(message, True, self.WHITE)
+        next_wave_text = self.font.render(next_wave_message, True, self.WHITE)
+        
+        # Center the messages on screen
+        wave_text_rect = wave_text.get_rect(center=(self.width // 2, self.height // 2 - 30))
+        next_wave_text_rect = next_wave_text.get_rect(center=(self.width // 2, self.height // 2 + 30))
+        
+        self.screen.blit(wave_text, wave_text_rect)
+        self.screen.blit(next_wave_text, next_wave_text_rect)
+    
     def reset_game(self):
         """Reset the game state"""
         self.player = Player(50, self.height // 2, self)
@@ -163,6 +225,12 @@ class Game:
         self.lives = 3
         self.game_over = False
         self.spawn_counter = 0
+        # Reset wave variables
+        self.current_wave = 1
+        self.wave_enemies_spawned = 0
+        self.wave_enemies_required = self.calculate_wave_enemies(self.current_wave)
+        self.wave_completed = False
+        self.wave_transition = False
         # Ensure player is not in ghost state after reset
         self.player.is_ghost = False
         self.player.visible = True
